@@ -1,0 +1,7 @@
+setup passport & make ui design of whatsapp
+
+step 1 : make addChat()
+step 2 : make openChat()
+step 3 : express 4 socket.io
+step 4 : make modal
+step 5 : axios cdn & make axios "/findUser" 

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bootstrap demo</title>
+  <link rel="stylesheet" href="../stylesheets/style.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+</head>
+
+<body>
+
+  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+    aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" style="color: black;" id="exampleModalLongTitle">Modal title</h5>
+          <button type="button" style="border: none;" class="close" data-bs-dismiss="modal" aria-label="Close">
+            <span style="color: black; padding: .4vh .4vw; font-size: 1.5vw;" aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <form id="findUserForm" action="/findUser" class="d-flex">
+            <input id="findUserInput" class="form-control" type="text" name="username" placeholder="Enter username">
+            <input type="submit" class="btn btn-success">
+          </form>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="main" class="w-100 h-100 d-flex">
+
+    <div id="left" class="h-100 col-3 border-end">
+      <div class="usernav">
+        <div class="user d-flex w-100 align-items-center p-2 gap-2 border-bottom">
+          <img style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" src="<%= user.pic %>" alt="">
+          <h1 class="m-0">
+            <%= user.username %>
+          </h1>
+          <i data-bs-toggle="modal" data-bs-target="#exampleModalCenter" class="ri-add-fill"
+            style="margin-left: auto; font-size: 1.8rem; cursor: pointer;"></i>
+        </div>
+      </div>
+      <div class="chats p-3">
+        <h3>Your chats</h3>
+
+      </div>
+    </div>
+
+    <div id="right" class="h-100 col-9">
+
+    </div>
+
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"
+    integrity="sha512-uMtXmF28A2Ab/JJO2t/vYhlaa/3ahUOgj1Zf27M5rOo8/+fcTUVH0/E0ll68njmjrLqOBjXM3V9NiPFL5ywWPQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+    var oppositeUser
+
+    function addChat(username, image) {
+      document.querySelector(".chats").innerHTML += `<div onclick="openChat('${username}','${image}')" class="chat d-flex align-items-center gap-2 p-1 pt-2">
+        <img style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;" src="${image}" alt="">
+        <h1 class="m-0 fs-4" >${username}</h1>
+      </div>`
+    }
+
+    async function openChat(username, image) {
+      oppositeUser = username
+
+      var chats = await axios.post("/findChats", {
+        oppositeUser
+      })
+      chats = chats.data.chats
+      console.log(chats)
+
+      var clutter = ''
+
+      chats.forEach(chat => {
+        console.log('aaa')
+        if (chat.fromUser == oppositeUser) {
+          clutter += `<div class="msg incomingMsg mt-2 bg-light text-dark rounded-3">
+             ${chat.data}
+           </div>`
+        }
+        else {
+          clutter += `<div class="msg outgoingMsg ms-auto mt-2 bg-light text-dark rounded-3">
+            ${chat.data}
+          </div>`
+        }
+      })
+
+      document.querySelector("#right").innerHTML = `<div style="height: 4.2rem;" class="rightnav p-2 d-flex border-bottom gap-2 align-items-center">
+        <img style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;"
+          src="${image}"
+          alt="">
+        <h1 class="userr m-0 fs-4">${username}</h1>
+      </div>
+      <div class="conversationArea w-100 bg-dark p-3">
+        ${clutter}
+      </div>
+      <input onchange="sendMessage(event)" id="input-text" type="text" placeholder="Write message">`
+      document.querySelector(".conversationArea").scrollTo(0, document.querySelector(".conversationArea").getBoundingClientRect().height)
+    }
+
+    var form = document.querySelector("#findUserForm")
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault()
+      let query = document.querySelector("#findUserInput").value
+      try {
+        var response = await axios.post("/findUser", {
+          username: query
+        })
+      } catch (err) {
+        alert("No user found with this name.")
+      }
+
+      var findUser = response.data.user
+      if (findUser) {
+        addChat(findUser.username, findUser.pic)
+        var myModel = document.querySelector("#exampleModalCenter")
+        var modal = bootstrap.Modal.getInstance(myModel)
+        modal.hide();
+      }
+      // console.log(response.data)
+    })
+
+    function sendMessage(event) {         //sendMessage input function
+      var msg = event.target.value
+      var payLoad = {
+        msg,
+        fromUser: username,
+        toUser: oppositeUser
+      }
+      socket.emit('newmsg', payLoad)
+      console.log(payLoad)
+      document.querySelector(".conversationArea").innerHTML += `<div class="msg outgoingMsg ms-auto mt-2 bg-light text-dark rounded-3">
+             ${msg}
+           </div>`
+      document.querySelector(".conversationArea").scrollTo(0, document.querySelector(".conversationArea").getBoundingClientRect().height)
+      event.target.value = ''
+    }
+
+  </script>
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    var username = '<%= user.username %>'
+    var socket = io();
+    socket.emit('userConnected', {
+      username
+    })
+
+    socket.on('msg', msg => {
+      if (msg.isNewChat)
+        addChat(msg.fromUser, msg.fromUserPic)   //sendMessage krne pr friend._id ki addChat show kre
+      else {
+        if (msg.fromUser == oppositeUser) {
+          document.querySelector(".conversationArea").innerHTML += `<div class="msg incomingMsg mt-2 bg-light text-dark rounded-3">
+             ${msg.msg}
+           </div>`
+          document.querySelector(".conversationArea").scrollTo(0, document.querySelector(".conversationArea").getBoundingClientRect().height)
+        }
+      }
+    })
+
+  </script>
+</body>
+
+</html>
